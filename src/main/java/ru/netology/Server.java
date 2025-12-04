@@ -63,26 +63,6 @@ public class Server {
 
             Request request = new Request(method, path, protocolVerse, null, null);
 
-//            //проверка на наличие пути в запросе в списке разрешенных путей
-//            if (!VALID_PATH.contains(path)) {
-//                sendBadResponse(out, "404 Not found");
-//                return;
-//            }
-
-//            final var filePath = Path.of(".", "public", path);
-//            if (!Files.exists(filePath)) {
-//                sendBadResponse(out, "404 Not Found");
-//                //    System.out.println(filePath + " doesn't exist");
-//                return;
-//            }
-
-
-//            final var mimeType = Files.probeContentType(filePath);
-//            final var length = Files.size(filePath);
-
-//            //пишем ответ сервера на запрос - отправляем запрошенный файл
-//            sendResponse(out, mimeType, length, filePath);
-
 //      Разъяснение ИИ:
 //            Что делает getOrDefault?
 //      Если в handlers есть запись с ключом "GET" → вернёт внутреннюю мапу вида Map<String, Handler>,
@@ -110,7 +90,6 @@ public class Server {
             }
             try {
                 handler.handle(request, out);
-
             } catch (Exception ex) {
                 //если ошибка будет в логике у пользователя, то делаем перехват
                 sendBadResponse(out, "500 Internet server error");
@@ -135,22 +114,6 @@ public class Server {
         }
 
     }
-
-//    private void sendResponse(BufferedOutputStream out, String mimeType, long length, Path filePath) {
-//        try {
-//            out.write((
-//                    "HTTP/1.1 200 OK\r\n" +
-//                            "Content-Type: " + mimeType + "\r\n" +
-//                            "Content-Length: " + length + "\r\n" +
-//                            "Connection: close\r\n" +
-//                            "\r\n"
-//            ).getBytes());
-//            Files.copy(filePath, out);
-//            out.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     //метод для добавления обработчика
     public void addHandler(String method, String path, Handler handler) {
