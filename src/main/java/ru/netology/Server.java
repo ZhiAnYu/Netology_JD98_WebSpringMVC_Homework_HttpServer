@@ -59,7 +59,7 @@ public class Server {
             final var requestLineDelimiter = new byte[]{'\r', '\n'};
             final var requestLineEnd = indexOf(buffer, requestLineDelimiter, 0, read);
             if (requestLineEnd == -1) {
-                sendBadResponse(out, "400 Bad request"); //делиметр не попался в массиве байт в пределах лимита
+                sendResponseBodyless(out, "400 Bad request"); //делиметр не попался в массиве байт в пределах лимита
                 return;
             }
 
@@ -71,14 +71,14 @@ public class Server {
 
             //проверка на правильность запроса из трех частей
             if (requestLineArray.length != 3) {
-                sendBadResponse(out, "400 Bad request");
+                sendBadRequestError(out);
                 return;
             }
 
             final var method = requestLineArray[0];
             //проверка на допустимость вызываемого метода
             if (!ALLOWED_METHODS.contains(method)) {
-                sendBadResponse(out,"405 Not allowed");
+                sendNotAllowedError(out);
                 return;
             }
             System.out.println(method);
@@ -86,7 +86,7 @@ public class Server {
             final var fullPath = requestLineArray[1];
             //проверка на правильность пути
             if (!fullPath.startsWith("/")) {
-                sendBadResponse(out, "400 Bad request");
+                sendBadRequestError(out);
                 return;
             }
             System.out.println(fullPath);
@@ -102,7 +102,7 @@ public class Server {
             final var headersStart = requestLineEnd + requestLineDelimiter.length;
             final var headersEnd = indexOf(buffer, headersDelimiter, headersStart, read);
             if (headersEnd == -1) {
-                sendBadResponse(out, "422 Unprocessed Content");
+                sendHeadersAbsent(out);
                 return;
             }
 
@@ -135,13 +135,13 @@ public class Server {
 
 //            //проверка на наличие пути в запросе в списке разрешенных путей
 //            if (!VALID_PATH.contains(fullPath)) {
-//                sendBadResponse(out, "404 Not found");
+//                sendResponseBodyless(out, "404 Not found");
 //                return;
 //            }
 
 //            final var filePath = Path.of(".", "public", fullPath);
 //            if (!Files.exists(filePath)) {
-//                sendBadResponse(out, "404 Not Found");
+//                sendResponseBodyless(out, "404 Not Found");
 //                //    System.out.println(filePath + " doesn't exist");
 //                return;
 //            }
@@ -175,7 +175,7 @@ public class Server {
             Handler handler = handlers.getOrDefault(method, Collections.emptyMap())
                     .get(cleanPath);
             if (handler == null) {
-                sendBadResponse(out, "404 Not found");
+                sendNotFoundError(out);
                 return;
             }
             try {
@@ -183,7 +183,7 @@ public class Server {
 
             } catch (Exception ex) {
                 //если ошибка будет в логике у пользователя, то делаем перехват
-                sendBadResponse(out, "500 Internet server error");
+                sendServerError(out);
             }
 
         } catch (IOException e) {
@@ -204,8 +204,22 @@ public class Server {
         }
         return -1;
     }
+    //обертки для sendResponse - для очевидности ответа (исключаем magicNumbers) / вебинар от 5.12.25
+    private void sendBadRequestError (BufferedOutputStream out){
+        sendResponseBodyless(out, "400 Bad request");
+    }
+    private void sendNotFoundError(BufferedOutputStream out) {
+        sendResponseBodyless(out, "404 Not found");
+    }
+    private void sendServerError (BufferedOutputStream out) {
+        sendResponseBodyless(out, "500 Internet server error");
+    }
+    private void sendNotAllowedError (BufferedOutputStream out) {sendResponseBodyless(out, "405 Not allowed");}
+    private void sendHeadersAbsent (BufferedOutputStream out) {sendResponseBodyless(out, "422 Unprocessed Content");
+    }
 
-    void sendBadResponse(BufferedOutputStream bufferedOutputStream, String status) {
+
+    void sendResponseBodyless(BufferedOutputStream bufferedOutputStream, String status) {
         try {
             bufferedOutputStream.write((
                     "HTTP/1.1 " + status + "\r\n" +
