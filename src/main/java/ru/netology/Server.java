@@ -11,13 +11,10 @@ import java.util.concurrent.Executors;
 public class Server {
     //обязательные поля
     private final int PORT;
-    //private final List<String> VALID_PATH;
     private final List<String> ALLOWED_METHODS;
     private final int THREAD_AMOUNT = 64;
     private final int LIMIT = 4096;
     final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_AMOUNT);
-    //мапа для хранения обработчиков
-    //Ключ первого уровня — HTTP-метод, второго — путь.
     private final Map<String, Map<String, Handler>> handlers = new ConcurrentHashMap<>();
 
 
@@ -133,26 +130,6 @@ public class Server {
 
             Request request = new Request(method, fullPath, protocolVerse, headers, body);
 
-//            //проверка на наличие пути в запросе в списке разрешенных путей
-//            if (!VALID_PATH.contains(fullPath)) {
-//                sendResponseBodyless(out, "404 Not found");
-//                return;
-//            }
-
-//            final var filePath = Path.of(".", "public", fullPath);
-//            if (!Files.exists(filePath)) {
-//                sendResponseBodyless(out, "404 Not Found");
-//                //    System.out.println(filePath + " doesn't exist");
-//                return;
-//            }
-
-
-//            final var mimeType = Files.probeContentType(filePath);
-//            final var length = Files.size(filePath);
-
-//            //пишем ответ сервера на запрос - отправляем запрошенный файл
-//            sendResponse(out, mimeType, length, filePath);
-
 //      Разъяснение ИИ:
 //            Что делает getOrDefault?
 //      Если в handlers есть запись с ключом "GET" → вернёт внутреннюю мапу вида Map<String, Handler>,
@@ -180,7 +157,6 @@ public class Server {
             }
             try {
                 handler.handle(request, out);
-
             } catch (Exception ex) {
                 //если ошибка будет в логике у пользователя, то делаем перехват
                 sendServerError(out);
@@ -233,22 +209,6 @@ public class Server {
         }
 
     }
-
-//    private void sendResponse(BufferedOutputStream out, String mimeType, long length, Path filePath) {
-//        try {
-//            out.write((
-//                    "HTTP/1.1 200 OK\r\n" +
-//                            "Content-Type: " + mimeType + "\r\n" +
-//                            "Content-Length: " + length + "\r\n" +
-//                            "Connection: close\r\n" +
-//                            "\r\n"
-//            ).getBytes());
-//            Files.copy(filePath, out);
-//            out.flush();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     //метод для добавления обработчика
     public void addHandler(String method, String path, Handler handler) {
