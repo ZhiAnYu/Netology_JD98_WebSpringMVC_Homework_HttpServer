@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 public class Server {
     //обязательные поля
     private final int PORT;
-    private final List<String> VALID_PATH;
     private final int THREAD_AMOUNT = 64;
     final ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_AMOUNT);
     //мапа для хранения обработчиков
@@ -23,9 +22,8 @@ public class Server {
     private final Map<String, Map<String, Handler>> handlers = new ConcurrentHashMap<>();
 
 
-    public Server(int port, List<String> validPath) {
+    public Server(int port) {
         PORT = port;
-        VALID_PATH = validPath;
         //    System.out.println("Server created");
     }
 

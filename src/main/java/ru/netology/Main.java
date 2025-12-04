@@ -4,14 +4,11 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        //создаем список допустимых файлов
-        final var validPaths = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html", "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
         //создаем новый объект класса server
-        Server server = new Server (9999, validPaths);
+        Server server = new Server (9999);
 
         // добавление хендлеров (обработчиков)
         server.addHandler("GET", "/hello", new Handler() {
@@ -34,16 +31,16 @@ public class Main {
         });
 
         server.addHandler("GET", "/message", (Request request, BufferedOutputStream out) -> {
-            var responce = "Your message was received";
+            var response = "Your message was received";
             try {
                 out.write((
                         "HTTP/1.1 200 OK\r\n" +
                                 "Content-Type: text/plain \r\n" +
-                                "Content-Length: " + responce.length() + "\r\n" +
+                                "Content-Length: " + response.length() + "\r\n" +
                                 "Connection: close\r\n" +
                                 "\r\n"
                 ).getBytes());
-                out.write(responce.getBytes());
+                out.write(response.getBytes());
                 out.flush();
             } catch (IOException e) {
                 e.printStackTrace();
