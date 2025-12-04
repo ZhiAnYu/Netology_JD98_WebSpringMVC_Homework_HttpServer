@@ -53,7 +53,7 @@ public class Server {
             //        System.out.println(requestLine);
             //проверка на три части
             if (parts.length != 3) {
-                sendBadResponse(out, "400 Bad request");
+                sendBadRequestError(out);
                 return;
             }
 
@@ -85,14 +85,14 @@ public class Server {
             Handler handler = handlers.getOrDefault(method, Collections.emptyMap())
                     .get(path);
             if (handler == null) {
-                sendBadResponse(out, "404 Not found");
+                sendNotFoundError(out);
                 return;
             }
             try {
                 handler.handle(request, out);
             } catch (Exception ex) {
                 //если ошибка будет в логике у пользователя, то делаем перехват
-                sendBadResponse(out, "500 Internet server error");
+                sendServerError(out);
             }
 
         } catch (IOException e) {
@@ -100,7 +100,18 @@ public class Server {
         }
     }
 
-    void sendBadResponse(BufferedOutputStream bufferedOutputStream, String status) {
+    //обертки для sendResponse - для очевидности ответа (исключаем magicNumbers) / вебинар от 5.12.25
+    private void sendBadRequestError (BufferedOutputStream out){
+        sendResponseBodyless(out, "400 Bad request");
+    }
+    private void sendNotFoundError(BufferedOutputStream out) {
+        sendResponseBodyless(out, "404 Not found");
+    }
+    private void sendServerError (BufferedOutputStream out) {
+        sendResponseBodyless(out, "500 Internet server error");
+    }
+
+    private void sendResponseBodyless(BufferedOutputStream bufferedOutputStream, String status) {
         try {
             bufferedOutputStream.write((
                     "HTTP/1.1 " + status + "\r\n" +
