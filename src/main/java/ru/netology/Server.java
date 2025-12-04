@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,20 +49,15 @@ public class Server {
         try (socket;
              final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              final var out = new BufferedOutputStream(socket.getOutputStream())) {
-            final var requestLine = in.readLine();
-            final var parts = requestLine.split(" ");
-            //        System.out.println(requestLine);
-            //проверка на три части
-            if (parts.length != 3) {
+//вызываем парсер и получаем Optional. Если он пустой (нераспарсилось), то BadRequest,
+// если все ОК, то вызваем метод .get
+            Optional<Request> optionalRequest = RequestParser.parse(in);
+            if (optionalRequest.isEmpty()){
                 sendBadRequestError(out);
                 return;
             }
 
-            var method = parts[0];
-            var path = parts[1];
-            var protocolVerse = parts[2];
-
-            Request request = new Request(method, path, protocolVerse, null, null);
+            Request request = optionalRequest.get();
 
 //      Разъяснение ИИ:
 //            Что делает getOrDefault?
@@ -82,8 +78,8 @@ public class Server {
 //      → всегда возвращает null.
 //           Итог: в любом случае, если хендлер не найден — handler == null.
 
-            Handler handler = handlers.getOrDefault(method, Collections.emptyMap())
-                    .get(path);
+            Handler handler = handlers.getOrDefault(request.method(), Collections.emptyMap())
+                    .get(request.path());
             if (handler == null) {
                 sendNotFoundError(out);
                 return;
