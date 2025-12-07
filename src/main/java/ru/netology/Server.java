@@ -46,87 +46,16 @@ public class Server {
              final var in = new BufferedInputStream(socket.getInputStream());
              final var out = new BufferedOutputStream(socket.getOutputStream())) {
 
-            // отмечаем количество байт в лимите - ставим метку на буффере входящего потока
-
-            in.mark(LIMIT);
-            final var buffer = new byte[LIMIT];
-            final var read = in.read(buffer);
-
-            // ищем request line
-            final var requestLineDelimiter = new byte[]{'\r', '\n'};
-            final var requestLineEnd = indexOf(buffer, requestLineDelimiter, 0, read);
-            if (requestLineEnd == -1) {
-                sendResponseBodyless(out, "400 Bad request"); //делиметр не попался в массиве байт в пределах лимита
-                return;
-            }
-
-            // читаем request line - это массив байт из буффера от 0 до requestLineEnd
-            final var requestLineBytes = Arrays.copyOf(buffer, requestLineEnd);
-            final var requestLineString = new String(requestLineBytes);
-            final var requestLineArray = requestLineString.split(" ");
-            // final var requestLineArray = new String(Arrays.copyOf(buffer, requestLineEnd)).split(" ");
-
-            //проверка на правильность запроса из трех частей
-            if (requestLineArray.length != 3) {
-                sendBadRequestError(out);
-                return;
-            }
-
-            final var method = requestLineArray[0];
             //проверка на допустимость вызываемого метода
             if (!ALLOWED_METHODS.contains(method)) {
                 sendNotAllowedError(out);
                 return;
             }
             System.out.println(method);
-
-            final var fullPath = requestLineArray[1];
-            //проверка на правильность пути
-            if (!fullPath.startsWith("/")) {
-                sendBadRequestError(out);
-                return;
-            }
             System.out.println(fullPath);
-
-            final var cleanPath = fullPath.substring(0, fullPath.indexOf('?'));
-            System.out.println(cleanPath);
-
-
-            final var protocolVerse = requestLineArray[2];
-
-            // ищем заголовки
-            final var headersDelimiter = new byte[]{'\r', '\n', '\r', '\n'};
-            final var headersStart = requestLineEnd + requestLineDelimiter.length;
-            final var headersEnd = indexOf(buffer, headersDelimiter, headersStart, read);
-            if (headersEnd == -1) {
-                sendHeadersAbsent(out);
-                return;
-            }
-
-            // отматываем на начало буфера
-            in.reset();
-            // пропускаем requestLine
-            in.skip(headersStart);
-
-            final var headersBytes = in.readNBytes(headersEnd - headersStart);
-            final var headers = Arrays.asList(new String(headersBytes).split("\r\n"));
             System.out.println(headers);
 
-            // для GET тела нет
-            String body = null;
-            if (!method.equals("GET")) {
-                in.skip(headersDelimiter.length);
-                // находим заголовок Content-Length, чтобы узнать количество байт тела,
-                // и прочитать из буффера это количество
-                final var contentLength = extractHeader(headers, "Content-Length");
-                if (contentLength.isPresent()) {
-                    final var length = Integer.parseInt(contentLength.get());
-                    final var bodyBytes = in.readNBytes(length);
 
-                    body = new String(bodyBytes);
-                    System.out.println(body);
-                }
-            }
 
             Request request = new Request(method, fullPath, protocolVerse, headers, body);
 
